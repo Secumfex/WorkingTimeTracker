@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Working Time Tracker</string>
+    <string name="calendar_app">Open Calendar App</string>
+    <string name="clock_in">Clock In</string>
+    <string name="clock_out">Clock Out</string>
+    <string name="clocked_in">Clocked In</string>
+    <string name="clocked_out">Clocked Out</string>
+    <string name="calendar_name">Arbeit</string>
+    <string name="calendar_name_pref">Kalender Name</string>
+    <string name="calendar_name_pref_key">calendarName</string>
+    <string name="calendar_name_pref_summary">Please provide your calendar\'s name</string>
+    <string name="event_name">Work</string>
+    <string name="event_name_pref">Event Name</string>
+    <string name="event_name_pref_key">eventName</string>
+    <string name="event_name_pref_summary">Please provide your event\'s name</string>
+    <string name="time_pref_title">Daily Working Time</string>
+    <string name="time_pref_key">timePref</string>
+    <string name="last_time_key">com.example.working_time_tracker.lastTimeKey</string>
+    <string name="last_time_state_key">com.example.working_time_tracker.lastTimeStateKey</string>
+</resources>
