@@ -28,6 +28,7 @@
         </activity>
         <activity
             android:name=".AppPreferenceActivity"
+            android:label="Preferences"
             android:parentActivityName=".AppPreferenceActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

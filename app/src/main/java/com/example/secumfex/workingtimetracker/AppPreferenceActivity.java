@@ -4,22 +4,19 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 
+import java.util.List;
+
 public class AppPreferenceActivity extends PreferenceActivity
 {
     @Override
-    protected void onCreate(Bundle savedInstanceState)
+    public void onBuildHeaders(List<Header> target)
     {
-        super.onCreate(savedInstanceState);
-        getFragmentManager().beginTransaction().replace(android.R.id.content, new MyPreferenceFragment()).commit();
+        loadHeadersFromResource(R.xml.headers_preference, target);
     }
 
-    public static class MyPreferenceFragment extends PreferenceFragment
+    @Override
+    protected boolean isValidFragment(String fragmentName)
     {
-        @Override
-        public void onCreate(final Bundle savedInstanceState)
-        {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.preferences);
-        }
+        return AppPreferenceFragment.class.getName().equals(fragmentName);
     }
 }
