@@ -14,6 +14,9 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -71,14 +74,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
+        PreferenceManager.setDefaultValues(getBaseContext(), R.xml.preferences, false);
+        setContentView(R.layout.activity_main);
 
         // print current date and init updater object
         updateTime();
 
         // ListView thing
         ArrayList<String> prefArray = new ArrayList<>();
-//        SharedPreferences pref = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
         prefArray.add(pref.getString(getString(R.string.time_pref_key), "time pref not found"));
@@ -151,6 +154,34 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             t.interrupt();
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    /**
+     * Create an AppPreferencesActivity
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch(item.getItemId())
+        {
+            case R.id.preferences:
+            {
+                Intent intent = new Intent(this, AppPreferenceActivity.class);
+                startActivity(intent);
+                return true;
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
     // prints the current time
     private void updateTime()
     {
@@ -257,13 +288,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     {
         Intent intent = new Intent(this, StatisticsActivity.class);
         startActivity(intent);
-    }
-
-
-    public void openSettings(View view)
-    {
-        Intent i = new Intent(this, AppPreferenceActivity.class);
-        startActivity(i);
     }
 
     /**
