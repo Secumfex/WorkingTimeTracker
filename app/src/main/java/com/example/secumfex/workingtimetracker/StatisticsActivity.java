@@ -119,7 +119,6 @@ public class StatisticsActivity extends Activity
     }
 
 
-
     /**
      * Attempt to call the API, after verifying that all the preconditions are
      *
@@ -134,11 +133,13 @@ public class StatisticsActivity extends Activity
         } else if (mCredential.getSelectedAccountName() == null) {
             chooseAccount();
         } else if (! isDeviceOnline()) {
-            mOutputText.setText("No network connection available.");
+            String textStr = "No network connection available.";
+            mOutputText.setText(textStr);
         } else {
             new MakeRequestTask(mCredential).execute();
         }
     }
+
 
     /**
      * Attempts to set the account used with the API credentials. If an account
@@ -192,9 +193,8 @@ public class StatisticsActivity extends Activity
         switch(requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
-                    mOutputText.setText(
-                            "This app requires Google Play Services. Please install " +
-                                    "Google Play Services on your device and relaunch this app.");
+                    String textStr = "This app requires Google Play Services. Please install Google Play Services on your device and relaunch this app.";
+                    mOutputText.setText(textStr);
                 } else {
                     getResultsFromApi();
                 }
@@ -363,8 +363,7 @@ public class StatisticsActivity extends Activity
             String calendarId = getString(R.string.calendar_name);
             String calendarName = sharedPref.getString(calendarPrefKey, calendarPrefKey);
             {
-                String pageToken = null;
-                CalendarList calendarList = mService.calendarList().list().setPageToken(pageToken).execute();
+                CalendarList calendarList = mService.calendarList().list().setPageToken(null).execute();
                 List<CalendarListEntry> items = calendarList.getItems();
 
                 for (CalendarListEntry calendarListEntry : items) {
@@ -387,19 +386,18 @@ public class StatisticsActivity extends Activity
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
             String eventPropertyKey = getString(R.string.event_name_pref_key);
-            String eventName = sharedPref.getString(eventPropertyKey, getString(R.string.event_name));
-            return eventName;
+            return sharedPref.getString(eventPropertyKey, getString(R.string.event_name));
         }
 
         /**
          * Fetch a list of the next 10 events from the primary calendar.
          * @return List of Strings describing returned events.
-         * @throws IOException
+         * @throws IOException when calendarList.list() fails
          */
         private List<String> getDataFromApi() throws IOException {
             // List the next 10 events from the primary calendar.
             DateTime now = new DateTime(System.currentTimeMillis());
-            List<String> eventStrings = new ArrayList<String>();
+            List<String> eventStrings = new ArrayList<>();
 
             /*
             Events events = mService.events().list("primary")
@@ -483,9 +481,11 @@ public class StatisticsActivity extends Activity
         protected void onPostExecute(List<String> output) {
             mProgress.hide();
             if (output == null || output.size() == 0) {
-                mOutputText.setText("No results returned.");
+                String textStr = "No results returned.";
+                mOutputText.setText(textStr);
             } else {
-                output.add(0, "Data retrieved using the Google Calendar API:");
+                String textStr = "Data retrieved using the Google Calendar API:";
+                output.add(0, textStr);
                 mOutputText.setText(TextUtils.join("\n", output));
             }
         }
@@ -503,11 +503,13 @@ public class StatisticsActivity extends Activity
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
                             StatisticsActivity.REQUEST_AUTHORIZATION);
                 } else {
-                    mOutputText.setText("The following error occurred:\n"
-                            + mLastError.getMessage());
+
+                    String textStr = String.format("%s\n%s", "The following error occurred:", mLastError.getMessage() );
+                    mOutputText.setText(textStr);
                 }
             } else {
-                mOutputText.setText("Request cancelled.");
+                String textStr = "Request cancelled.";
+                mOutputText.setText(textStr);
             }
         }
     }

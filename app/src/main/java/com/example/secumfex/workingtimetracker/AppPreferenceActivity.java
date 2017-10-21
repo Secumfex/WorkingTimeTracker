@@ -1,8 +1,6 @@
 package com.example.secumfex.workingtimetracker;
 
-import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
 
 import java.util.List;
 

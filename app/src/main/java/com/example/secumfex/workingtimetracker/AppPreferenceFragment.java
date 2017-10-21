@@ -4,9 +4,10 @@ import android.os.Bundle;
 import android.preference.PreferenceFragment;
 
 /**
- * Created by Arend on 21.10.2017.
+ * This class represents the Preference Fragment
+ *
+ * Created by Secumfex on 21.10.2017.
  */
-
 public class AppPreferenceFragment extends PreferenceFragment
 {
     @Override

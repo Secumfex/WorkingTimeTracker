@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 import com.google.gson.Gson;
 
 /**
- * Created by Arend on 21.10.2017.
+ * This class provides general purpose, auxiliary, utility functionality.
+ *
+ * Created by Secumfex on 21.10.2017.
  */
 
 public class Utils {

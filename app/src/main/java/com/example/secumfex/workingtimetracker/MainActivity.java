@@ -54,7 +54,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
 
-    private enum ClockInState {CLOCKED_IN, CLOCKED_OUT, PAUSED};
+    private enum ClockInState {CLOCKED_IN, CLOCKED_OUT/*, PAUSED*/}
     private ClockInState clockInState = ClockInState.CLOCKED_OUT;
 
     private Thread updateThread = null;
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
         prefArray.add(lastTimeStateStr);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, prefArray);
         ListView listView = (ListView) findViewById(R.id.listview);
         listView.setAdapter(adapter);
@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     /**
      * Switch the clock in state without toggling the state transfer
-     * @param view
+     * @param view source of event
      */
     public void switchClockInStateWithoutToggle(View view)
     {
@@ -240,8 +240,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         ToggleButton toggle = (ToggleButton) findViewById(R.id.toggleButton);
         toggle.setChecked( clockInState == ClockInState.CLOCKED_IN );
 
-        String btnStr = new String();
-        String stateStr = new String();
+        String btnStr = "";
+        String stateStr = "";
         switch (clockInState)
         {
             case CLOCKED_IN:
@@ -324,7 +324,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             chooseAccount();
         } else if (! isDeviceOnline()) {
             TextView tv = (TextView) findViewById(R.id.testTextView);
-            tv.setText("No network connection available.");
+            String textStr = "No network connection available.";
+            tv.setText(textStr);
         } else {
             new MainActivity.MakeRequestTask(credential, clockInState).execute();
         }
@@ -383,9 +384,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
                     TextView tv = (TextView) findViewById(R.id.testTextView);
-                    tv.setText(
-                            "This app requires Google Play Services. Please install " +
-                                    "Google Play Services on your device and relaunch this app.");
+                    String textStr = "This app requires Google Play Services. Please install Google Play Services on your device and relaunch this app.";
+                    tv.setText(textStr);
                 } else {
                     getResultsFromApi();
                 }
@@ -553,13 +553,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             int stateInt = (state == ClockInState.CLOCKED_IN) ? 1 : 0;
             editor.putLong(getString(R.string.last_time_key), time);
             editor.putInt(getString(R.string.last_time_state_key), stateInt);
-            editor.commit();
+            editor.apply();
         }
 
         /**
          * Fetch a list of the target events from today from the target calendar.
          * @return List of Events that have been altered.
-         * @throws IOException
+         * @throws IOException if calendarList().list() fails
          */
         private List<Event> getDataFromApi() throws IOException {
             // Prepare DateTime variables.
@@ -582,8 +582,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             String calendarId = getString(R.string.calendar_name);
             String calendarName = sharedPref.getString(calendarPrefKey, calendarPrefKey);
             {
-                String pageToken = null;
-                CalendarList calendarList = calendarService.calendarList().list().setPageToken(pageToken).execute();
+                CalendarList calendarList = calendarService.calendarList().list().setPageToken(null).execute();
                 List<CalendarListEntry> items = calendarList.getItems();
 
                 for (CalendarListEntry calendarListEntry : items) {
@@ -606,7 +605,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     .setQ(eventName)
                     .execute();
             List<Event> items = events.getItems();
-            List<Event> eventList = new ArrayList<Event>();
+            List<Event> eventList = new ArrayList<>();
 
             // If Empty and clock in : Create new Event
             if ( items.isEmpty() && clockInState == ClockInState.CLOCKED_IN )
@@ -675,8 +674,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                         e.setEnd( edtEnd );
 
                         // set name
-                        String eventStr = eventName;
-                        e.setSummary(eventStr);
+                        e.setSummary(eventName);
 
                         //==== insert
                         e = calendarService.events().insert(calendarId, e).execute();
@@ -684,11 +682,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     }
                 } else if (clockInState == ClockInState.CLOCKED_OUT) {
                     // clocked out and somewhere before event start : create new event or do nothing
-                    if (event.getStart().getDateTime().getValue() > nowDateTime.getValue()) {
+                    /*if (event.getStart().getDateTime().getValue() > nowDateTime.getValue()) {
                         //TODO create new event
                     }
                     // clocked out and event already begun or ended : update end time
-                    else if (event.getStart().getDateTime().getValue() < nowDateTime.getValue()) {
+                    else*/ if (event.getStart().getDateTime().getValue() < nowDateTime.getValue()) {
                         event.setEnd(et);
                     }
                 }
@@ -716,7 +714,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             progressDialog.hide();
             if (output == null || output.size() == 0) {
                 TextView tv = (TextView) findViewById(R.id.testTextView);
-                tv.setText("No results returned.");
+                String textStr =  "No results returned.";
+                tv.setText(textStr);
             } else {
                 String textStr =  "Data retrieved using the Google Calendar API:";
                 TextView tv = (TextView) findViewById(R.id.testTextView);
@@ -755,12 +754,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                             StatisticsActivity.REQUEST_AUTHORIZATION);
                 } else {
                     TextView tv = (TextView) findViewById(R.id.testTextView);
-                    tv.setText("The following error occurred:\n"
-                            + lastError.getMessage());
+                    String textStr = String.format("%s\n%s", "The following error occurred:", lastError.getMessage() );
+                    tv.setText( textStr );
                 }
             } else {
                 TextView tv = (TextView) findViewById(R.id.testTextView);
-                tv.setText("Request cancelled.");
+                String textStr = "Request cancelled.";
+                tv.setText(textStr);
             }
         }
     }
