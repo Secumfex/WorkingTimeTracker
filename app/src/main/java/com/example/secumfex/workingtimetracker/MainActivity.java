@@ -185,10 +185,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     // prints the current time
     private void updateTime()
     {
-        TextView dateView = (TextView) findViewById(R.id.dateView);
-        Date date = Calendar.getInstance().getTime();
-        String dateStr = DateFormat.getDateTimeInstance().format(date);
-        dateView.setText(dateStr);
+        runOnUiThread(new Runnable() {
+            public void run(){
+                TextView dateView = (TextView) findViewById(R.id.dateView);
+                Date date = Calendar.getInstance().getTime();
+                String dateStr = DateFormat.getDateTimeInstance().format(date);
+                dateView.setText(dateStr);
+            }
+        });
     }
 
     private class CountDownRunner implements Runnable{
@@ -200,7 +204,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                }catch(Exception e){
                 }
             }
         }
