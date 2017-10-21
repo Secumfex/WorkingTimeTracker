@@ -49,7 +49,7 @@ import java.util.List;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class Main2Activity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
+public class OverviewActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks{
 
     private enum ClockInState {CLOCKED_IN, CLOCKED_OUT, PAUSED};
     private ClockInState clockInState = ClockInState.CLOCKED_OUT;
@@ -299,7 +299,7 @@ public class Main2Activity extends AppCompatActivity implements EasyPermissions.
             TextView tv = (TextView) findViewById(R.id.testTextView);
             tv.setText("No network connection available.");
         } else {
-            new Main2Activity.MakeRequestTask(credential, clockInState).execute();
+            new OverviewActivity.MakeRequestTask(credential, clockInState).execute();
         }
     }
 
@@ -476,7 +476,7 @@ public class Main2Activity extends AppCompatActivity implements EasyPermissions.
             final int connectionStatusCode) {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
         Dialog dialog = apiAvailability.getErrorDialog(
-                Main2Activity.this,
+                OverviewActivity.this,
                 connectionStatusCode,
                 REQUEST_GOOGLE_PLAY_SERVICES);
         dialog.show();
