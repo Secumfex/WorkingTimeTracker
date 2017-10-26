@@ -360,7 +360,7 @@ public class StatisticsActivity extends Activity
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
             String calendarPrefKey = getString(R.string.calendar_name_pref_key);
-            String calendarId = getString(R.string.calendar_name);
+            String calendarId = getString(R.string.calendar_name_pref_def);
             String calendarName = sharedPref.getString(calendarPrefKey, calendarPrefKey);
             {
                 CalendarList calendarList = mService.calendarList().list().setPageToken(null).execute();
@@ -386,7 +386,7 @@ public class StatisticsActivity extends Activity
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
             String eventPropertyKey = getString(R.string.event_name_pref_key);
-            return sharedPref.getString(eventPropertyKey, getString(R.string.event_name));
+            return sharedPref.getString(eventPropertyKey, getString(R.string.event_name_pref_def));
         }
 
         /**

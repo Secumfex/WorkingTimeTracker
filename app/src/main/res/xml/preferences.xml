@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <EditTextPreference android:title="@string/calendar_name_pref"
+    <EditTextPreference android:title="@string/calendar_name_pref_title"
         android:key="@string/calendar_name_pref_key"
-        android:defaultValue="@string/calendar_name"
+        android:defaultValue="@string/calendar_name_pref_def"
         android:summary="@string/calendar_name_pref_summary"></EditTextPreference>
-    <EditTextPreference android:title="@string/event_name_pref"
+    <EditTextPreference android:title="@string/event_name_pref_title"
         android:key="@string/event_name_pref_key"
-        android:defaultValue="@string/event_name"
+        android:defaultValue="@string/event_name_pref_def"
         android:summary="Please provide your calendar's name"></EditTextPreference>
     <com.example.secumfex.workingtimetracker.TimePreference
         android:key="@string/time_pref_key"

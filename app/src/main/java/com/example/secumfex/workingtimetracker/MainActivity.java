@@ -579,7 +579,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
             // Retrieve Calendar ID
             String calendarPrefKey = getString(R.string.calendar_name_pref_key);
-            String calendarId = getString(R.string.calendar_name);
+            String calendarId = getString(R.string.calendar_name_pref_def);
             String calendarName = sharedPref.getString(calendarPrefKey, calendarPrefKey);
             {
                 CalendarList calendarList = calendarService.calendarList().list().setPageToken(null).execute();
@@ -595,7 +595,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
             // Retrieve Events
             String eventPropertyKey = getString(R.string.event_name_pref_key);
-            String eventName = sharedPref.getString(eventPropertyKey, getString(R.string.event_name));
+            String eventName = sharedPref.getString(eventPropertyKey, getString(R.string.event_name_pref_def));
             Events events = calendarService.events().list(calendarId)
                     .setMaxResults(10)
                     .setTimeMin(todayMorningDateTime)
