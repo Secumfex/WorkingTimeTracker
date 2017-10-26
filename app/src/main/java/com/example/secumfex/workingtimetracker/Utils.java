@@ -11,7 +11,7 @@ import com.google.gson.Gson;
  * Created by Secumfex on 21.10.2017.
  */
 
-public class Utils {
+class Utils {
     public static void saveObjectToSharedPreference(Context context, String preferenceFileName, String serializedObjectKey, Object object) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(preferenceFileName, 0);
         SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
@@ -28,6 +28,28 @@ public class Utils {
             return gson.fromJson(sharedPreferences.getString(preferenceKey, ""), classType);
         }
         return null;
+    }
+
+    static long getTimeValueSeconds( int seconds )
+    {
+        return 1000 * seconds;
+    }
+
+    static long getTimeValueMinutes( int minutes )
+    {
+        return getTimeValueSeconds( 60 * minutes );
+    }
+    static long getTimeValueHours( int hours )
+    {
+        return getTimeValueMinutes( 60 * hours );
+    }
+    static long getTimeValueDays( int days )
+    {
+        return getTimeValueHours( 24 * days );
+    }
+    static long getTimeValue(int days, int hours, int minutes, int seconds)
+    {
+        return getTimeValueDays( days ) + getTimeValueHours( hours ) + getTimeValueMinutes( minutes ) + getTimeValueSeconds( seconds );
     }
 
 }
