@@ -413,8 +413,8 @@ public class StatisticsActivity extends Activity
             String eventName = getEventName();
 
             // Retrieve Events
-            DateTime minTime = new DateTime(now.getValue() - (1000 * 60 * 60 * 24 *7)); // 7 days in past
-            DateTime maxTime = new DateTime(now.getValue() + (1000 * 60 * 60 )); // 1h in future
+            DateTime minTime = new DateTime(now.getValue() - Utils.getTimeValueDays(7) );
+            DateTime maxTime = new DateTime(now.getValue() + Utils.getTimeValueMinutes(15) );
             int numMaxResults = 20;
             Events events = mService.events().list(calendarId)
                     .setMaxResults(numMaxResults)
@@ -439,8 +439,8 @@ public class StatisticsActivity extends Activity
 
                 // calculate duration
                 long durationMilliseconds = end.getValue() - start.getValue();
-                long hours = durationMilliseconds / (1000 * 60 * 60);
-                long minutes = (durationMilliseconds - (hours * 60 * 60 * 1000)) / (1000 * 60);
+                long hours = durationMilliseconds / Utils.getTimeValueHours(1);
+                long minutes = (durationMilliseconds - Utils.getTimeValueHours((int) hours)) / Utils.getTimeValueMinutes(1);
 
                 // update total duration
                 totalDurationMilliseconds += durationMilliseconds;
@@ -448,15 +448,18 @@ public class StatisticsActivity extends Activity
                 // create weekday and duration string
                 SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
                 String dayStr = dayFormat.format( new Date(start.getValue()) );
-                String durationStr = Long.toString(hours) + ":" + Long.toString(minutes);
+                String decimalZeroStr = (minutes < 10 ? decimalZeroStr = "0" : "");
+                String durationStr = Long.toString(hours) + ":" + decimalZeroStr + Long.toString(minutes);
 
                 eventStrings.add(
                         String.format("%s (%s) (%s)", event.getSummary(), dayStr, durationStr));
             }
 
             // create total duration string and add to result
-            long totalHours = totalDurationMilliseconds / (1000 * 60 * 60);
-            long totalMinutes = (totalDurationMilliseconds - (totalHours * 60 * 60 * 1000)) / (1000 * 60);
+            long totalHours = totalDurationMilliseconds / Utils.getTimeValueHours(1);
+            long hoursTimeVal = Utils.getTimeValueHours((int) totalHours);
+            long minuteTimeVal = Utils.getTimeValueMinutes(1);
+            long totalMinutes = (totalDurationMilliseconds - hoursTimeVal) / minuteTimeVal;
             String totalDurationStr = Long.toString(totalHours) + ":" + Long.toString(totalMinutes);
             String totalDurationInfoStr = "Total working time ";
             eventStrings.add(
