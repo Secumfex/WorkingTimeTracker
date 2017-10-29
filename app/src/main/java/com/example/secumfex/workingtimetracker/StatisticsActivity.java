@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +112,7 @@ public class StatisticsActivity extends Activity
         mProgress.setMessage("Calling Google Calendar API ...");
 
         setContentView(activityLayout);
+//        setContentView(R.layout.activity_statistics);
 
         // Initialize credentials and service object.
         mCredential = GoogleAccountCredential.usingOAuth2(
@@ -389,6 +391,25 @@ public class StatisticsActivity extends Activity
             return sharedPref.getString(eventPropertyKey, getString(R.string.event_name_pref_def));
         }
 
+        private long getLastFirstOfMonthTimeValue()
+        {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 5);
+            calendar.set(Calendar.MINUTE, 0);
+            return calendar.getTimeInMillis();
+        }
+
+        private long getLastFirstDayOfWeekTimeValue()
+        {
+            Calendar calendar = Calendar.getInstance();
+            int firstDayOfWeek = calendar.getFirstDayOfWeek();
+            calendar.set(Calendar.DAY_OF_WEEK, firstDayOfWeek);
+            calendar.set(Calendar.HOUR_OF_DAY, 5);
+            calendar.set(Calendar.MINUTE, 0);
+            return calendar.getTimeInMillis();
+        }
+
         /**
          * Fetch a list of the next 10 events from the primary calendar.
          * @return List of Strings describing returned events.
@@ -413,7 +434,9 @@ public class StatisticsActivity extends Activity
             String eventName = getEventName();
 
             // Retrieve Events
-            DateTime minTime = new DateTime(now.getValue() - Utils.getTimeValueDays(7) );
+            DateTime lastFirstOfWeekTime   = new DateTime(getLastFirstDayOfWeekTimeValue());
+//            DateTime minTime = new DateTime(now.getValue() - Utils.getTimeValueDays(7) );
+            DateTime minTime = new DateTime(getLastFirstOfMonthTimeValue());
             DateTime maxTime = new DateTime(now.getValue() + Utils.getTimeValueMinutes(15) );
             int numMaxResults = 20;
             Events events = mService.events().list(calendarId)
@@ -425,6 +448,10 @@ public class StatisticsActivity extends Activity
                     .setQ(eventName)
                     .execute();
             List<Event> eventList = events.getItems();
+
+            long durationSinceLastFirstOfWeek = 0;
+            long durationSinceLastFirstOfMonth = 0;
+            long overTimeSinceLastFirstOfMonth = 0;
 
             long totalDurationMilliseconds = 0;
             // sum event durations
@@ -445,10 +472,16 @@ public class StatisticsActivity extends Activity
                 // update total duration
                 totalDurationMilliseconds += durationMilliseconds;
 
+                // if within the running week
+                if ( start.getValue() >= lastFirstOfWeekTime.getValue() )
+                {
+                    durationSinceLastFirstOfWeek += durationMilliseconds;
+                }
+
                 // create weekday and duration string
                 SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
                 String dayStr = dayFormat.format( new Date(start.getValue()) );
-                String decimalZeroStr = (minutes < 10 ? decimalZeroStr = "0" : "");
+                String decimalZeroStr = (minutes < 10 ? "0" : "");
                 String durationStr = Long.toString(hours) + ":" + decimalZeroStr + Long.toString(minutes);
 
                 eventStrings.add(
