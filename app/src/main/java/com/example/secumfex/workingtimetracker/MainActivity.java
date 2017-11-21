@@ -311,7 +311,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     /**
      * Attempt to call the API, after verifying that all the preconditions are
-     *
      * satisfied. The preconditions are: Google Play Services installed, an
      * account was selected and the device currently has online access. If any
      * of the preconditions are not satisfied, the app will prompt the user as
@@ -751,7 +750,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 } else if (lastError instanceof UserRecoverableAuthIOException) {
                     startActivityForResult(
                             ((UserRecoverableAuthIOException) lastError).getIntent(),
-                            StatisticsActivity.REQUEST_AUTHORIZATION);
+                            CalendarQuery.REQUEST_AUTHORIZATION);
                 } else {
                     TextView tv = (TextView) findViewById(R.id.testTextView);
                     String textStr = String.format("%s\n%s", "The following error occurred:", lastError.getMessage() );
