@@ -375,7 +375,7 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
                 CalendarQuery.this,
                 connectionStatusCode,
                 REQUEST_GOOGLE_PLAY_SERVICES);
-        dialog.show();
+//        dialog.show();
     }
 
     /**
@@ -452,7 +452,7 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
         @Override
         protected void onPreExecute() {
             mProgress.setMessage("");
-            mProgress.show();
+//            mProgress.show();
         }
 
         /**
