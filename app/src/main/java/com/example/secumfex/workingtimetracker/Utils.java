@@ -12,11 +12,22 @@ import com.google.gson.Gson;
  */
 
 class Utils {
+    public static String serialize(Object object)
+    {
+        Gson gson = new Gson();
+        return gson.toJson(object);
+    }
+
+    public static <GenericClass> GenericClass deserialize(String object, Class<GenericClass> classType)
+    {
+        Gson gson = new Gson();
+        return gson.fromJson(object, classType);
+    }
+
     public static void saveObjectToSharedPreference(Context context, String preferenceFileName, String serializedObjectKey, Object object) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(preferenceFileName, 0);
         SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
-        final Gson gson = new Gson();
-        String serializedObject = gson.toJson(object);
+        String serializedObject = serialize(object);
         sharedPreferencesEditor.putString(serializedObjectKey, serializedObject);
         sharedPreferencesEditor.apply();
     }
@@ -25,7 +36,7 @@ class Utils {
         SharedPreferences sharedPreferences = context.getSharedPreferences(preferenceFileName, 0);
         if (sharedPreferences.contains(preferenceKey)) {
             final Gson gson = new Gson();
-            return gson.fromJson(sharedPreferences.getString(preferenceKey, ""), classType);
+            return deserialize(sharedPreferences.getString(preferenceKey, ""), classType);
         }
         return null;
     }
