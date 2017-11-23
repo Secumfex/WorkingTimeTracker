@@ -54,7 +54,7 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
     GoogleAccountCredential mCredential;
 
     ProgressDialog mProgress;
-    AlertDialog mAlertDialog;
+//    AlertDialog mAlertDialog;
 
     String calendarName = null;
     String eventName = null;
@@ -171,7 +171,7 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 //                    }
 //                });
 
-        mAlertDialog = builder1.create();
+//        mAlertDialog = builder1.create();
 
         getResultsFromApi();
     }
@@ -235,9 +235,8 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
                     String textStr = "This app requires Google Play Services. Please install Google Play Services on your device and relaunch this app.";
-//                    mOutputText.setText(textStr);
-                    mAlertDialog.setMessage(textStr);
-                    mAlertDialog.show();
+//                    mAlertDialog.setMessage(textStr);
+//                    mAlertDialog.show();
                 } else {
                     getResultsFromApi();
                 }
@@ -282,9 +281,8 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
             chooseAccount();
         } else if (! isDeviceOnline()) {
             String textStr = "No network connection available.";
-//            mOutputText.setText(textStr);
-            mAlertDialog.setMessage(textStr);
-            mAlertDialog.show();
+//            mAlertDialog.setMessage(textStr);
+//            mAlertDialog.show();
         } else {
             new CalendarQuery.MakeRequestTask(mCredential).execute();
         }
@@ -484,14 +482,15 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
                 } else {
 
                     String textStr = String.format("%s\n%s", "The following error occurred:", mLastError.getMessage());
-                    mAlertDialog.setMessage(textStr);
-                    mAlertDialog.show();
+//                    mAlertDialog.setMessage(textStr);
+//                    mAlertDialog.show();
                 }
             } else {
                 String textStr = "Request cancelled.";
-                mAlertDialog.setMessage(textStr);
-                mAlertDialog.show();
+//                mAlertDialog.setMessage(textStr);
+//                mAlertDialog.show();
             }
+            finish();
         }
     }
 }
