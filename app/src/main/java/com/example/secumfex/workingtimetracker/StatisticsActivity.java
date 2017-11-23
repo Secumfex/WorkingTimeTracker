@@ -33,6 +33,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -45,8 +46,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -438,7 +441,7 @@ public class StatisticsActivity extends Activity
 //            DateTime minTime = new DateTime(now.getValue() - Utils.getTimeValueDays(7) );
             DateTime minTime = new DateTime(getLastFirstOfMonthTimeValue());
             DateTime maxTime = new DateTime(now.getValue() + Utils.getTimeValueMinutes(15) );
-            int numMaxResults = 20;
+            int numMaxResults = 60;
             Events events = mService.events().list(calendarId)
                     .setMaxResults(numMaxResults)
                     .setOrderBy("startTime")
@@ -450,8 +453,7 @@ public class StatisticsActivity extends Activity
             List<Event> eventList = events.getItems();
 
             long durationSinceLastFirstOfWeek = 0;
-            long durationSinceLastFirstOfMonth = 0;
-            long overTimeSinceLastFirstOfMonth = 0;
+            SparseArray<Long> dayToDurationMap = new SparseArray<>();
 
             long totalDurationMilliseconds = 0;
             // sum event durations
@@ -466,8 +468,8 @@ public class StatisticsActivity extends Activity
 
                 // calculate duration
                 long durationMilliseconds = end.getValue() - start.getValue();
-                long hours = durationMilliseconds / Utils.getTimeValueHours(1);
-                long minutes = (durationMilliseconds - Utils.getTimeValueHours((int) hours)) / Utils.getTimeValueMinutes(1);
+//                long hours = durationMilliseconds / Utils.getTimeValueHours(1);
+//                long minutes = (durationMilliseconds - Utils.getTimeValueHours((int) hours)) / Utils.getTimeValueMinutes(1);
 
                 // update total duration
                 totalDurationMilliseconds += durationMilliseconds;
@@ -478,30 +480,84 @@ public class StatisticsActivity extends Activity
                     durationSinceLastFirstOfWeek += durationMilliseconds;
                 }
 
+                // add duration to day
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis( start.getValue() );
+                int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
+                Long dayDuration = dayToDurationMap.get( dayOfYear );
+                if ( dayDuration == null )
+                {
+                    dayDuration = 0L;
+                }
+                dayToDurationMap.put( dayOfYear, dayDuration + durationMilliseconds );
+
                 // create weekday and duration string
-                SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
-                String dayStr = dayFormat.format( new Date(start.getValue()) );
+//                SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+//                String dayStr = dayFormat.format( new Date(start.getValue()) );
+//                String decimalZeroStr = (minutes < 10 ? "0" : "");
+//                String durationStr = Long.toString(hours) + ":" + decimalZeroStr + Long.toString(minutes);
+
+//                eventStrings.add(String.format("%s (%s) (%s)", event.getSummary(), dayStr, durationStr));
+            }
+
+            // iterate days, show work times for day
+            for (int i = 0; i < dayToDurationMap.size(); i++)
+            {
+                int dayOfYear = dayToDurationMap.keyAt(i);
+                long durationOfDay = dayToDurationMap.get( dayOfYear );
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
+
+                long hours = durationOfDay / Utils.getTimeValueHours(1);
+                long minutes = (durationOfDay - Utils.getTimeValueHours((int) hours)) / Utils.getTimeValueMinutes(1);
+                SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM. EE", Locale.getDefault());
+                String dayStr = dayFormat.format( calendar.getTime() );
                 String decimalZeroStr = (minutes < 10 ? "0" : "");
                 String durationStr = Long.toString(hours) + ":" + decimalZeroStr + Long.toString(minutes);
-
-                eventStrings.add(
-                        String.format("%s (%s) (%s)", event.getSummary(), dayStr, durationStr));
+                eventStrings.add(String.format("%s (%s)", dayStr, durationStr));
             }
 
             // create total duration string and add to result
-            long totalHours = totalDurationMilliseconds / Utils.getTimeValueHours(1);
-            long hoursTimeVal = Utils.getTimeValueHours((int) totalHours);
-            long minuteTimeVal = Utils.getTimeValueMinutes(1);
-            long totalMinutes = (totalDurationMilliseconds - hoursTimeVal) / minuteTimeVal;
-            String totalDurationStr = Long.toString(totalHours) + ":" + Long.toString(totalMinutes);
+            String totalDurationStr = getDurationString(totalDurationMilliseconds);
             String totalDurationInfoStr = "Total working time ";
-            eventStrings.add(
-                    String.format("%s (%s)", totalDurationInfoStr, totalDurationStr));
-            // add total duration as string
+            eventStrings.add(String.format("%s (%s)", totalDurationInfoStr, totalDurationStr));
+
+            // create overtime string and add
+            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+            String timeStr = pref.getString(getString(R.string.time_pref_key), null);
+            if ( timeStr != null )
+            {
+                int hours = Integer.parseInt( timeStr.substring(0, timeStr.indexOf(":")) );
+                int minutes = Integer.parseInt( timeStr.substring(timeStr.indexOf(":") +1) );
+                long milliseconds = Utils.getTimeValueHours(hours) + Utils.getTimeValueMinutes(minutes);
+
+                long regularWorkingTime = dayToDurationMap.size() * milliseconds;
+                long overTimeSinceFirstOfMonth = totalDurationMilliseconds - regularWorkingTime;
+
+//                int overTimeHours = Utils.getHours( overTimeSinceFirstOfMonth );
+//                int overTimeMinutes = Utils.getMinutes(overTimeSinceFirstOfMonth - Utils.getTimeValueHours(overTimeHours));
+//                String decimalZeroStr = (minutes < 10 ? "0" : "");
+//                String overTimeStr = Long.toString(overTimeHours) + ":" + decimalZeroStr + Long.toString(overTimeMinutes);
+                String overTimeStr = getDurationString(overTimeSinceFirstOfMonth);
+                String overTimeInfoStr = "Over time ";
+                eventStrings.add(String.format("%s (%s)", overTimeInfoStr, overTimeStr));
+            }
+
 
             return eventStrings;
         }
 
+
+        private String getDurationString(long durationMilliseconds )
+        {
+            int hours = Utils.getHours( durationMilliseconds );
+            int minutes = Utils.getMinutes(durationMilliseconds - Utils.getTimeValueHours(hours));
+            String decimalZeroStr = (minutes < 10 ? "0" : "");
+            return String.format("%s:%s%s",Long.toString(hours),decimalZeroStr,Long.toString(minutes));
+//            SimpleDateFormat dayFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+//            return dayFormat.format(new Date(durationMilliseconds));
+        }
 
         @Override
         protected void onPreExecute() {

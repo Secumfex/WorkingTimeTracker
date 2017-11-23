@@ -52,4 +52,13 @@ class Utils {
         return getTimeValueDays( days ) + getTimeValueHours( hours ) + getTimeValueMinutes( minutes ) + getTimeValueSeconds( seconds );
     }
 
+    static int getHours( long timeValue )
+    {
+        return getMinutes(timeValue) / 60;
+    }
+
+    static int getMinutes( long timeValue )
+    {
+        return (int) timeValue / (1000 * 60);
+    }
 }
