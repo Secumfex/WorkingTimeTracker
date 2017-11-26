@@ -14,6 +14,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.widget.LinearLayout;
 
@@ -24,6 +25,7 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
@@ -33,10 +35,16 @@ import com.google.api.services.calendar.model.CalendarList;
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -51,17 +59,17 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 
     private String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
 
-    GoogleAccountCredential mCredential;
+    private GoogleAccountCredential mCredential;
 
-    ProgressDialog mProgress;
+//    private ProgressDialog mProgress;
 //    AlertDialog mAlertDialog;
 
-    String calendarName = null;
-    String eventName = null;
-    DateTime minTime = null;
-    DateTime maxTime = null;
-    int numMaxResults = 250;
-    String accountName = null;
+    private String calendarName;
+    private String eventName;
+    private DateTime minTime;
+    private DateTime maxTime;
+    private int numMaxResults;
+    private String accountName;
 
     public String[] getSCOPES() {
         return SCOPES;
@@ -69,60 +77,6 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 
     public CalendarQuery setSCOPES(String[] SCOPES) {
         this.SCOPES = SCOPES;
-        return this;
-    }
-
-    public String getCalendarName() {
-        return calendarName;
-    }
-
-    public CalendarQuery setCalendarName(String calendarName) {
-        this.calendarName = calendarName;
-        return this;
-    }
-
-    public String getEventName() {
-        return eventName;
-    }
-
-    public CalendarQuery setEventName(String eventName) {
-        this.eventName = eventName;
-        return this;
-    }
-
-    public DateTime getMinTime() {
-        return minTime;
-    }
-
-    public CalendarQuery setMinTime(DateTime minTime) {
-        this.minTime = minTime;
-        return this;
-    }
-
-    public DateTime getMaxTime() {
-        return maxTime;
-    }
-
-    public CalendarQuery setMaxTime(DateTime maxTime) {
-        this.maxTime = maxTime;
-        return this;
-    }
-
-    public int getNumMaxResults() {
-        return numMaxResults;
-    }
-
-    public CalendarQuery setNumMaxResults(int numMaxResults) {
-        this.numMaxResults = numMaxResults;
-        return this;
-    }
-
-    public String getAccountName() {
-        return accountName;
-    }
-
-    public CalendarQuery setAccountName(String accountName) {
-        this.accountName = accountName;
         return this;
     }
 
@@ -134,44 +88,37 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LinearLayout activityLayout = new LinearLayout(this);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        activityLayout.setLayoutParams(lp);
-        activityLayout.setOrientation(LinearLayout.VERTICAL);
-        activityLayout.setPadding(16, 16, 16, 16);
+        calendarName = "primary";
+        eventName = null;
+        minTime = new DateTime(System.currentTimeMillis());
+        maxTime = new DateTime(System.currentTimeMillis());
+        numMaxResults = 250;
+        accountName = null;
 
-        setContentView(activityLayout);
+        Bundle bundle = getIntent().getExtras();
+        setAccountName(bundle.getString(getString(R.string.account_name_pref_key), accountName));
+        setEventName(bundle.getString(getString(R.string.event_name_pref_key), eventName));
+        setCalendarName(bundle.getString(getString(R.string.calendar_name_pref_key), calendarName));
+        setMinTime(new DateTime(bundle.getLong(getString(R.string.min_time_pref_key), minTime.getValue())));
+        setMaxTime(new DateTime(bundle.getLong(getString(R.string.max_time_pref_key), maxTime.getValue())));
+        setNumMaxResults(bundle.getInt(getString(R.string.num_max_results_pref_key), numMaxResults));
 
-        mProgress = new ProgressDialog(this);
-        mProgress.setMessage("Calling Google Calendar API ...");
+//        LinearLayout activityLayout = new LinearLayout(this);
+//        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+//                LinearLayout.LayoutParams.MATCH_PARENT,
+//                LinearLayout.LayoutParams.MATCH_PARENT);
+//        activityLayout.setLayoutParams(lp);
+//        activityLayout.setOrientation(LinearLayout.VERTICAL);
+//        activityLayout.setPadding(16, 16, 16, 16);
+
+//        setContentView(activityLayout);
+
+//        mProgress = new ProgressDialog(this);
+//        mProgress.setMessage("Calling Google Calendar API ...");
 
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
-
-        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-        builder1.setMessage("Write your message here.");
-        builder1.setCancelable(true);
-
-        builder1.setPositiveButton(
-                "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-
-//        builder1.setNegativeButton(
-//                "No",
-//                new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int id) {
-//                        dialog.cancel();
-//                    }
-//                });
-
-//        mAlertDialog = builder1.create();
 
         getResultsFromApi();
     }
@@ -247,10 +194,9 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
                     String accountName =
                             data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                     if (accountName != null) {
-                        SharedPreferences settings =
-                                getPreferences(Context.MODE_PRIVATE);
+                        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
                         SharedPreferences.Editor editor = settings.edit();
-                        editor.putString(getString(R.string.app_name), accountName);
+                        editor.putString(getString(R.string.account_name_pref_key), accountName);
                         editor.apply();
                         mCredential.setSelectedAccountName(accountName);
                         getResultsFromApi();
@@ -284,7 +230,8 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 //            mAlertDialog.setMessage(textStr);
 //            mAlertDialog.show();
         } else {
-            new CalendarQuery.MakeRequestTask(mCredential).execute();
+            CalendarQuery.MakeRequestTask task = new CalendarQuery.MakeRequestTask(mCredential, this);
+            task.execute();
         }
     }
 
@@ -303,6 +250,11 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
         if (EasyPermissions.hasPermissions(
                 this, Manifest.permission.GET_ACCOUNTS)) {
             if (accountName != null) {
+                SharedPreferences settings =
+                        getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString(getString(R.string.account_name_pref_key), accountName);
+                editor.apply();
                 mCredential.setSelectedAccountName(accountName);
                 getResultsFromApi();
             } else {
@@ -378,6 +330,60 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 //        dialog.show();
     }
 
+    public String getCalendarName() {
+        return calendarName;
+    }
+
+    public CalendarQuery setCalendarName(String calendarName) {
+        this.calendarName = calendarName;
+        return this;
+    }
+
+    public String getEventName() {
+        return eventName;
+    }
+
+    public CalendarQuery setEventName(String eventName) {
+        this.eventName = eventName;
+        return this;
+    }
+
+    public DateTime getMinTime() {
+        return minTime;
+    }
+
+    public CalendarQuery setMinTime(DateTime minTime) {
+        this.minTime = minTime;
+        return this;
+    }
+
+    public DateTime getMaxTime() {
+        return maxTime;
+    }
+
+    public CalendarQuery setMaxTime(DateTime maxTime) {
+        this.maxTime = maxTime;
+        return this;
+    }
+
+    public int getNumMaxResults() {
+        return numMaxResults;
+    }
+
+    public CalendarQuery setNumMaxResults(int numMaxResults) {
+        this.numMaxResults = numMaxResults;
+        return this;
+    }
+
+    public String getAccountName() {
+        return accountName;
+    }
+
+    public CalendarQuery setAccountName(String accountName) {
+        this.accountName = accountName;
+        return this;
+    }
+
     /**
      * An asynchronous task that handles the Google Calendar API call.
      * Placing the API calls in their own task ensures the UI stays responsive.
@@ -385,14 +391,16 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
     private class MakeRequestTask extends AsyncTask<Void, Void, List<Event>> {
         private com.google.api.services.calendar.Calendar mService = null;
         private Exception mLastError = null;
+        private CalendarQuery query = null;
 
-        MakeRequestTask(GoogleAccountCredential credential) {
+        MakeRequestTask(GoogleAccountCredential credential, CalendarQuery query) {
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new com.google.api.services.calendar.Calendar.Builder(
                     transport, jsonFactory, credential)
                     .setApplicationName("Google Calendar API Android Quickstart")
                     .build();
+            this.query = query;
         }
 
         /**
@@ -435,23 +443,35 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 
         private List<Event> getDataFromApi() throws IOException {
             // Retrieve Events
-            String calendarId = getCalendarId(calendarName);
+            String calendarId = getCalendarId(getCalendarName());
             Events events = mService.events().list(calendarId)
-                    .setMaxResults(numMaxResults)
+                    .setMaxResults(query.getNumMaxResults())
                     .setOrderBy("startTime")
-                    .setTimeMin(minTime)
-                    .setTimeMax(maxTime)
+                    .setTimeMin(query.getMinTime())
+                    .setTimeMax(query.getMaxTime())
                     .setSingleEvents(true)
-                    .setQ(eventName)
+                    .setQ(query.getEventName())
                     .execute();
+
             List<Event> eventList = events.getItems();
+            EventWrapper[] eventWrappers = new EventWrapper[eventList.size()];
+            for ( int i = 0; i < eventList.size(); i++ )
+            {
+                eventWrappers[i] = new EventWrapper( eventList.get(i) );
+            }
+
+            String resultStr = Utils.serialize(eventWrappers);
+
+            Intent data = new Intent();
+            data.putExtra(KEY_RESULT, resultStr);
+            setResult(RESULT_OK, data);
 
             return eventList;
         }
 
         @Override
         protected void onPreExecute() {
-            mProgress.setMessage("");
+//           mProgress.setMessage("");
 //            mProgress.show();
         }
 
@@ -462,14 +482,14 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
          */
         @Override
         protected void onPostExecute(List<Event> output) {
-            mProgress.hide();
-            getIntent().getExtras().putString(KEY_RESULT, Utils.serialize(output));
-            finish();
+//            mProgress.hide();
+
+            query.finish();
         }
 
         @Override
         protected void onCancelled() {
-            mProgress.hide();
+//            mProgress.hide();
             if (mLastError != null) {
                 if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
                     showGooglePlayServicesAvailabilityErrorDialog(
@@ -490,7 +510,7 @@ public class CalendarQuery extends Activity implements EasyPermissions.Permissio
 //                mAlertDialog.setMessage(textStr);
 //                mAlertDialog.show();
             }
-            finish();
+//          query.finish();
         }
     }
 }

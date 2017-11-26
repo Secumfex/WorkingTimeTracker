@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     ProgressDialog progressDialog;
 
 //    public static final String EXTRA_MESSAGE = "com.example.secumfex.workingtimetracker.MESSAGE";
-    private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { CalendarScopes.CALENDAR };
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
@@ -344,8 +343,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private void chooseAccount() {
         if (EasyPermissions.hasPermissions(
                 this, Manifest.permission.GET_ACCOUNTS)) {
-            String accountName = getPreferences(Context.MODE_PRIVATE)
-                    .getString(PREF_ACCOUNT_NAME, null);
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+            String accountName = settings.getString(getString(R.string.account_name_pref_key), null);
+
             if (accountName != null) {
                 credential.setSelectedAccountName(accountName);
                 getResultsFromApi();
@@ -395,10 +395,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     String accountName =
                             data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                     if (accountName != null) {
-                        SharedPreferences settings =
-                                getPreferences(Context.MODE_PRIVATE);
+                        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
                         SharedPreferences.Editor editor = settings.edit();
-                        editor.putString(PREF_ACCOUNT_NAME, accountName);
+                        editor.putString(getString(R.string.account_name_pref_key), accountName);
                         editor.apply();
                         credential.setSelectedAccountName(accountName);
                         getResultsFromApi();

@@ -1,36 +1,16 @@
 package com.example.secumfex.workingtimetracker;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
-
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.ExponentialBackOff;
 
 import com.google.api.services.calendar.*;
 import com.google.api.client.util.DateTime;
 
-import com.google.api.services.calendar.model.*;
-
-import android.Manifest;
-import android.accounts.AccountManager;
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.util.SparseArray;
@@ -40,19 +20,13 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-
-import pub.devrel.easypermissions.AfterPermissionGranted;
-import pub.devrel.easypermissions.EasyPermissions;
 
 public class StatisticsActivity extends Activity
 {
@@ -67,7 +41,6 @@ public class StatisticsActivity extends Activity
     static final int REQUEST_CURRENT_DAY = 1006;
 
     private static final String BUTTON_TEXT = "Call Google Calendar API";
-    private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
 
     /**
@@ -90,13 +63,26 @@ public class StatisticsActivity extends Activity
                 ViewGroup.LayoutParams.WRAP_CONTENT);
 
         mCallApiButton = new Button(this);
-        mCallApiButton.setText(BUTTON_TEXT);
+        mCallApiButton.setText("Query current Month Statistics");
         mCallApiButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mCallApiButton.setEnabled(false);
                 mOutputText.setText("");
-                getResultsFromApi();
+                startGetCurrentMonthHoursActivity();
+                mCallApiButton.setEnabled(true);
+            }
+        });
+        activityLayout.addView(mCallApiButton);
+
+        mCallApiButton = new Button(this);
+        mCallApiButton.setText("Query Last Month Statistics");
+        mCallApiButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCallApiButton.setEnabled(false);
+                mOutputText.setText("");
+                startGetLastMonthHoursActivity();
                 mCallApiButton.setEnabled(true);
             }
         });
@@ -119,41 +105,46 @@ public class StatisticsActivity extends Activity
 
 
     /**
-     * Attempt to call the API, after verifying that all the preconditions are
-     *
-     * satisfied. The preconditions are: Google Play Services installed, an
-     * account was selected and the device currently has online access. If any
-     * of the preconditions are not satisfied, the app will prompt the user as
-     * appropriate.
+     * Create and start a CalendarQuery to retrieve the current Month hours
      */
-    private void getResultsFromApi() {
-        String accountName = getAccountName();
-        String calendarName = getCalendarName();
-        String eventName = getEventName();
+    private void startGetCurrentMonthHoursActivity() {
 
         DateTime now = new DateTime(System.currentTimeMillis());
  //       DateTime lastFirstOfWeekTime   = new DateTime(getLastFirstDayOfWeekTimeValue());
         DateTime minTime = new DateTime(getLastFirstOfMonthTimeValue());
         DateTime maxTime = new DateTime(now.getValue() + Utils.getTimeValueMinutes(15) );
-        int numMaxResults = 60;
 
-        CalendarQuery query = new CalendarQuery();
-        query.setAccountName(accountName)
-                .setEventName(eventName)
-                .setAccountName(accountName)
-                .setCalendarName(calendarName)
-                .setMinTime(minTime)
-                .setMaxTime(maxTime)
-                .setNumMaxResults(numMaxResults);
         Intent intent = new Intent(this, CalendarQuery.class);
+        Bundle bundle = new Bundle();
+        putDefaultValuesToCalendarQueryBundle( bundle );
+
+        bundle.putLong(getString(R.string.min_time_pref_key), minTime.getValue());
+        bundle.putLong(getString(R.string.max_time_pref_key), maxTime.getValue());
+
+        intent.putExtras(bundle);
         startActivityForResult(intent, REQUEST_CURRENT_MONTH_EVENTS);
     }
 
+    private void startGetLastMonthHoursActivity()
+    {
+        DateTime minTime = new DateTime(getFirstOfLastMonthTimeValue());
+        DateTime maxTime = new DateTime(getLastOfLastMonthTimeValue());
+
+        Intent intent = new Intent(this, CalendarQuery.class);
+        Bundle bundle = new Bundle();
+        putDefaultValuesToCalendarQueryBundle( bundle );
+
+        bundle.putLong(getString(R.string.min_time_pref_key), minTime.getValue());
+        bundle.putLong(getString(R.string.max_time_pref_key), maxTime.getValue());
+
+        intent.putExtras(bundle);
+        startActivityForResult(intent, REQUEST_LAST_MONTH_EVENTS);
+    }
 
     String getAccountName()
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        String accountPrefKey = getString(R.string.app_name);
+        String accountPrefKey = getString(R.string.account_name_pref_key);
         String accountName = sharedPref.getString(accountPrefKey, null);
 
         return accountName;
@@ -186,15 +177,19 @@ public class StatisticsActivity extends Activity
         super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode) {
             case REQUEST_CURRENT_MONTH_EVENTS:
+            case REQUEST_LAST_MONTH_EVENTS:
                 if (resultCode == RESULT_OK && data != null &&
                         data.getExtras() != null) {
                     String eventListStr =
                             data.getStringExtra(CalendarQuery.KEY_RESULT);
                     if (eventListStr != null) {
-                        Event[] eventArr = Utils.deserialize(eventListStr, Event[].class);
-                        List<Event> eventList = Arrays.asList(eventArr);
+                        //EventWrapper[] eventArr = Utils.deserialize(eventListStr, EventWrapper[].class);
+                        //List<EventWrapper> eventWrapperList = Arrays.asList(eventArr);
 
-                        List<String> output = calculateCurrentMonthHours(eventList);
+                        EventWrapper[] eventWrappersArr = Utils.deserialize(eventListStr, EventWrapper[].class);
+                        List<EventWrapper> eventWrapperList = Arrays.asList(eventWrappersArr);
+
+                        List<String> output = calculateCurrentMonthHours(eventWrapperList);
                         printResults(output);
 
                         //TODO write events to preferences or s.th.
@@ -229,7 +224,7 @@ public class StatisticsActivity extends Activity
         }
     }
 
-    private List<String> calculateCurrentMonthHours(List<Event> eventList)
+    private List<String> calculateCurrentMonthHours(List<EventWrapper> eventWrapperList)
     {
         long durationSinceLastFirstOfWeek = 0;
         long totalDurationMilliseconds = 0;
@@ -241,9 +236,9 @@ public class StatisticsActivity extends Activity
         SparseArray<Long> dayToDurationMap = new SparseArray<>();
 
         // sum event durations
-        for (Event event : eventList) {
-            DateTime start = event.getStart().getDateTime();
-            DateTime end = event.getEnd().getDateTime();
+        for (EventWrapper eventWrapper : eventWrapperList) {
+            DateTime start = new DateTime(eventWrapper.start);
+            DateTime end = new DateTime(eventWrapper.end);
 
             // skip full day events
             if (start == null || end == null) {
@@ -337,6 +332,44 @@ public class StatisticsActivity extends Activity
         return String.format("%s:%s%s",Long.toString(hours),decimalZeroStr,Long.toString(minutes));
    }
 
+    private long getLastOfLastMonthTimeValue()
+    {
+        Calendar calendar = Calendar.getInstance();
+        if ( calendar.get(Calendar.MONTH) == Calendar.JANUARY )
+        {
+            calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
+            calendar.set(Calendar.MONTH, calendar.DECEMBER);
+        }
+        else
+        {
+            calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - 1);
+        }
+        Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH);
+        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 50);
+        return calendar.getTimeInMillis();
+    }
+
+    private long getFirstOfLastMonthTimeValue()
+    {
+        Calendar calendar = Calendar.getInstance();
+        if ( calendar.get(Calendar.MONTH) == Calendar.JANUARY )
+        {
+            calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
+            calendar.set(Calendar.MONTH, calendar.DECEMBER);
+        }
+        else
+        {
+            calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - 1);
+        }
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 5);
+        calendar.set(Calendar.MINUTE, 0);
+
+        return calendar.getTimeInMillis();
+    }
+
     private long getLastFirstOfMonthTimeValue()
     {
         Calendar calendar = Calendar.getInstance();
@@ -354,5 +387,18 @@ public class StatisticsActivity extends Activity
         calendar.set(Calendar.HOUR_OF_DAY, 5);
         calendar.set(Calendar.MINUTE, 0);
         return calendar.getTimeInMillis();
+    }
+
+    void putDefaultValuesToCalendarQueryBundle( Bundle bundle )
+    {
+        String accountName = getAccountName();
+        String calendarName = getCalendarName();
+        String eventName = getEventName();
+        int numMaxResults = 60;
+        bundle.putString(getString(R.string.account_name_pref_key), accountName);
+        bundle.putString(getString(R.string.event_name_pref_key), eventName);
+        bundle.putString(getString(R.string.calendar_name_pref_key), calendarName);
+        bundle.putInt(getString(R.string.num_max_results_pref_key), numMaxResults);
+
     }
 }

@@ -13,7 +13,10 @@
     <string name="event_name_pref_def">Work</string>
     <string name="event_name_pref_title">Event Name</string>
     <string name="event_name_pref_key" translatable="false">com.example.working_time_tracker.eventName</string>
-    <string name="event_name_pref_summary">Please provide your event\'s name</string>
+    <string name="event_name_pref_summary">Please provide your eventWrapper\'s name</string>
+    <string name="max_time_pref_key" translatable="false">com.example.working_time_tracker.maxTime</string>
+    <string name="min_time_pref_key" translatable="false">com.example.working_time_tracker.minTime</string>
+    <string name="num_max_results_pref_key" translatable="false">com.example.working_time_tracker.numMaxResults</string>
     <string name="time_pref_title">Daily Working Time</string>
     <string name="time_pref_key" translatable="false">com.example.working_time_tracker.timePref</string>
     <string name="last_time_key" translatable="false">com.example.working_time_tracker.lastTimeKey</string>
